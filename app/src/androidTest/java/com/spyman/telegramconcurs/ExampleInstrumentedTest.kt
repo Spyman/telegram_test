@@ -1,4 +1,4 @@
-package com.simbirsoft.telegramconcurs
+package com.spyman.telegramconcurs
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4

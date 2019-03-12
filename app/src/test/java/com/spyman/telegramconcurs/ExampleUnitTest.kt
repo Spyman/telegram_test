@@ -1,4 +1,4 @@
-package com.simbirsoft.telegramconcurs
+package com.spyman.telegramconcurs
 
 import org.junit.Test
 
