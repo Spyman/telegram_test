@@ -11,6 +11,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        diagram.setData(DataReader().readFromAssets(this, "chart_data.json").first().convertToDiagramValues().first())
+        diagram.setData(DataReader().readFromAssets(this, "chart_data.json").first().convertToDiagramValues())
     }
 }

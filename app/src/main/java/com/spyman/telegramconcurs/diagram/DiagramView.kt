@@ -2,9 +2,7 @@ package com.spyman.telegramconcurs.diagram
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PointF
 import android.util.AttributeSet
 import android.view.View
 import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
@@ -24,17 +22,12 @@ class DiagramView @JvmOverloads constructor(
     protected var xMin: Float = 0f
     protected var xRange: Float = 0f
 
-    protected var defaultPaint = Paint()
-
     protected var graphicsScaleX: Float = 1f
-    private var _data: LineDiagramData? = null
+    private var _data: List<LineDiagramData> = mutableListOf()
+
+    protected lateinit var paints: List<Paint>
 
     protected var position: Float = 0f
-
-    init {
-        defaultPaint.color = Color.RED
-        defaultPaint.strokeWidth = 5f
-    }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
@@ -44,31 +37,40 @@ class DiagramView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         canvas?.let {c ->
-            _data?.let {
+            _data.forEachIndexed { index, it ->
                 for (i in 1 until it.values.size) {
                     c.drawLine(
                             translateX(it.values[i - 1].x),
                             translateY(it.values[i - 1].y),
                             translateX(it.values[i].x),
                             translateY(it.values[i].y),
-                            defaultPaint
+                            paints[index]
                     )
                 }
             }
+
         }
         postInvalidateOnAnimation()
     }
 
-    fun setData(data:LineDiagramData) {
-        yMax = data.maximumValue
-        yMin = data.minimumValue
+    fun setData(data:List<LineDiagramData>) {
+        yMax = data.map { it.maximumValue }.max()!!
+        yMin = data.map { it.minimumValue }.min()!!
         yRange = yMax - yMin
 
-        xMin = data.values.first().x
-        xMax = data.values.last().x
+        xMin = data.map { it.values.first().x }.min()!!
+        xMax = data.map { it.values.last().x }.max()!!
         xRange = xMax - xMin
 
         _data = data
+
+        paints = data.map {
+            Paint().apply {
+                this.color = it.color
+                this.strokeWidth = 5f
+            }
+        }
+
         invalidate()
     }
 
@@ -81,9 +83,5 @@ class DiagramView @JvmOverloads constructor(
     fun setYScale(scale: Float) {
         graphicsScaleX = scale
         invalidate()
-    }
-
-    protected fun drawPoint(x: Float, y: Float, canvas: Canvas) {
-        canvas.drawCircle(x,y,2f, defaultPaint)
     }
 }

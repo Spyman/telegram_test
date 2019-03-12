@@ -18,8 +18,8 @@ class DataModel {
         for (separatedAxis in separatedAxises) {
             val axisInfo = AxisInfo(
                     separatedAxis,
-                    0,
-                    "x",
+                    Color.parseColor(colors!![separatedAxis.title]?: "#000000"),
+                    names!![separatedAxis.title]?: "x",
                     types!![separatedAxis.title]!!
             )
             if (separatedAxis.title == "x") {
