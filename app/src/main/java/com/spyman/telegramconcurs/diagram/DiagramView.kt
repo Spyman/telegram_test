@@ -4,11 +4,13 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
+import com.spyman.telegramconcurs.diagram.diagram_data.PositionController
 
 
-class DiagramView @JvmOverloads constructor(
+open class DiagramView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     protected var xSize: Int = 0
@@ -22,17 +24,18 @@ class DiagramView @JvmOverloads constructor(
     protected var xMin: Float = 0f
     protected var xRange: Float = 0f
 
-    protected var graphicsScaleX: Float = 1f
+    protected var graphicsScaleX: Float = 100f
     private var _data: List<LineDiagramData> = mutableListOf()
 
     protected lateinit var paints: List<Paint>
 
-    protected var position: Float = 0f
+    protected val positionController = PositionController()
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         xSize = measuredWidth - paddingTop - paddingBottom
         ySize = measuredHeight - paddingLeft - paddingRight
+        positionController.updateBorders(0f, xSize * graphicsScaleX)
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -48,10 +51,25 @@ class DiagramView @JvmOverloads constructor(
                     )
                 }
             }
+        }
+        if (positionController.updateScroll()) {
+            postInvalidateOnAnimation()
+        }
+    }
 
+    override fun performClick(): Boolean {
+        return super.performClick()
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        performClick()
+        event?.let {
+            positionController.onMotionEvent(it)
         }
         postInvalidateOnAnimation()
+        return true
     }
+
 
     fun setData(data:List<LineDiagramData>) {
         yMax = data.map { it.maximumValue }.max()!!
@@ -68,6 +86,7 @@ class DiagramView @JvmOverloads constructor(
             Paint().apply {
                 this.color = it.color
                 this.strokeWidth = 5f
+                this.isAntiAlias = true
             }
         }
 
@@ -75,13 +94,14 @@ class DiagramView @JvmOverloads constructor(
     }
 
     private fun translateX(x: Float) =
-            paddingLeft + ((x - xMin)/xRange * xSize)
+            paddingLeft + (((x - xMin)/xRange * xSize) * graphicsScaleX + positionController.position)
 
     private fun translateY(y: Float) =
             paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
 
     fun setYScale(scale: Float) {
         graphicsScaleX = scale
+        positionController.updateBorders(0f, xSize * scale)
         invalidate()
     }
 }
