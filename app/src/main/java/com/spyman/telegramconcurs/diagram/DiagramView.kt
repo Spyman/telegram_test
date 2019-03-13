@@ -61,11 +61,11 @@ open class DiagramView @JvmOverloads constructor(
                      * content width is 1000 pixels and the screen width is 200
                      * pixels, the maximum scroll offset should be 800 pixels.
                      */
-                    Math.round(-xSize * graphicsScaleX), xSize,
+                    Math.round((-xSize * graphicsScaleX) + xSize), 0,
                     Int.MIN_VALUE, Int.MAX_VALUE,
                     // The edges of the content. This comes into play when using
                     // the EdgeEffect class to draw "glow" overlays.
-                    Math.round(xSize * scaleX),
+                    Math.round(xSize * 0.4f),
                     ySize
             )
             // Invalidates to trigger computeScroll()
@@ -101,6 +101,7 @@ open class DiagramView @JvmOverloads constructor(
                 }
             }
         }
+
         if (!scroller.isFinished) {
             scroller.computeScrollOffset()
             position = scroller.currX.toFloat()
