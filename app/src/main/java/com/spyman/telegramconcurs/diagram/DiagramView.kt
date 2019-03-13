@@ -3,11 +3,13 @@ package com.spyman.telegramconcurs.diagram
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.os.Handler
 import android.util.AttributeSet
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.widget.OverScroller
 import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
-import com.spyman.telegramconcurs.diagram.diagram_data.PositionController
 
 
 open class DiagramView @JvmOverloads constructor(
@@ -24,18 +26,65 @@ open class DiagramView @JvmOverloads constructor(
     protected var xMin: Float = 0f
     protected var xRange: Float = 0f
 
-    protected var graphicsScaleX: Float = 100f
+    protected var graphicsScaleX: Float = 10f
     private var _data: List<LineDiagramData> = mutableListOf()
 
     protected lateinit var paints: List<Paint>
 
-    protected val positionController = PositionController()
+    protected var position: Float = 0f
+
+    //protected val positionController = PositionController()
+    protected val scroller = OverScroller(context)
+    protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+        override fun onDown(e: MotionEvent): Boolean {
+            // Initiates the decay phase of any active edge effects.
+            //releaseEdgeEffects()
+            // Aborts any active scroll animations and invalidates.
+            scroller.forceFinished(true)
+            postInvalidateOnAnimation()
+            return true
+        }
+
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+            scroller.forceFinished(true)
+            // Begins the animation
+            scroller.fling(
+                    // Current scroll position
+                    Math.round(position),
+                    0,
+                    Math.round(velocityX),
+                    0,
+                    /*
+                     * Minimum and maximum scroll positions. The minimum scroll
+                     * position is generally zero and the maximum scroll position
+                     * is generally the content size less the screen size. So if the
+                     * content width is 1000 pixels and the screen width is 200
+                     * pixels, the maximum scroll offset should be 800 pixels.
+                     */
+                    Math.round(-xSize * graphicsScaleX), xSize,
+                    Int.MIN_VALUE, Int.MAX_VALUE,
+                    // The edges of the content. This comes into play when using
+                    // the EdgeEffect class to draw "glow" overlays.
+                    Math.round(xSize * scaleX),
+                    ySize
+            )
+            // Invalidates to trigger computeScroll()
+            postInvalidateOnAnimation()
+            return true
+        }
+
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+            position -= distanceX
+            postInvalidateOnAnimation()
+            return true
+        }
+
+    }, Handler())
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         xSize = measuredWidth - paddingTop - paddingBottom
         ySize = measuredHeight - paddingLeft - paddingRight
-        positionController.updateBorders(0f, xSize * graphicsScaleX)
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -52,10 +101,14 @@ open class DiagramView @JvmOverloads constructor(
                 }
             }
         }
-        if (positionController.updateScroll()) {
+        if (!scroller.isFinished) {
+            scroller.computeScrollOffset()
+            position = scroller.currX.toFloat()
             postInvalidateOnAnimation()
         }
     }
+
+
 
     override fun performClick(): Boolean {
         return super.performClick()
@@ -63,10 +116,7 @@ open class DiagramView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         performClick()
-        event?.let {
-            positionController.onMotionEvent(it)
-        }
-        postInvalidateOnAnimation()
+        gestureDetector.onTouchEvent(event)
         return true
     }
 
@@ -94,14 +144,13 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     private fun translateX(x: Float) =
-            paddingLeft + (((x - xMin)/xRange * xSize) * graphicsScaleX + positionController.position)
+            paddingLeft + (((x - xMin)/xRange * xSize) * graphicsScaleX + position)
 
     private fun translateY(y: Float) =
             paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
 
     fun setYScale(scale: Float) {
         graphicsScaleX = scale
-        positionController.updateBorders(0f, xSize * scale)
         invalidate()
     }
 }
