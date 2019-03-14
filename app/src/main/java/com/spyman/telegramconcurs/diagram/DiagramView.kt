@@ -9,29 +9,31 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.OverScroller
+import com.spyman.telegramconcurs.diagram.diagram_data.DiagramValue
 import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
 
 
 open class DiagramView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+    private var _data: List<LineDiagramData> = mutableListOf()
     protected var xSize: Int = 0
-    protected var ySize: Int = 0
 
+    protected var ySize: Int = 0
     protected var yMax: Float = 0f
     protected var yMin: Float = 0f
-    protected var yRange: Float = 0f
 
+    protected var yRange: Float = 0f
     protected var xMax: Float = 0f
     protected var xMin: Float = 0f
-    protected var xRange: Float = 0f
 
+    protected var xRange: Float = 0f
     protected var graphicsScaleX: Float = 10f
-    private var _data: List<LineDiagramData> = mutableListOf()
 
     protected lateinit var paints: List<Paint>
 
     protected var position: Float = 0f
+    var dinamicSize = true
 
     //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
@@ -147,8 +149,19 @@ open class DiagramView @JvmOverloads constructor(
     private fun translateX(x: Float) =
             paddingLeft + (((x - xMin)/xRange * xSize) * graphicsScaleX + position)
 
-    private fun translateY(y: Float) =
-            paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
+    private fun translateY(y: Float) = if (dinamicSize) {
+        val onScreen = calcualteOnScreenRangeItems().flatten()
+        val yMin = onScreen.minBy { it.y }!!.y
+        val yMax = onScreen.maxBy { it.y }!!.y
+        val yRange = yMax - yMin
+        paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
+    } else {
+        paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
+    }
+
+    private fun calcualteOnScreenRangeItems(): List<List<DiagramValue>> {
+        return _data.map { it.values.filter { translateX(it.x).let {it > -25 && it < xSize + paddingLeft + paddingRight + 25 }  } }
+    }
 
     fun setYScale(scale: Float) {
         graphicsScaleX = scale
