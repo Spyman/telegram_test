@@ -35,7 +35,7 @@ open class DiagramView @JvmOverloads constructor(
     protected var position: Float = 0f
     var dinamicSize = true
 
-    val inScreenList = mutableListOf<DiagramValue>()
+    val inScreenList = mutableListOf<MutableList<DiagramValue>>()
 
     //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
@@ -93,22 +93,23 @@ open class DiagramView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         canvas?.let {c ->
-            _data.forEachIndexed { index, it ->
-                calcualteOnScreenRangeItems()
+            if (_data.isNotEmpty()) {
+                calculateOnScreenRangeItems()
                 if (dinamicSize) {
                     yMin = calculateOnScreenMin()
                     yMax = calculateOnScreenMax()
                     yRange = yMax - yMin
                 }
-
-                for (i in 1 until it.values.size) {
-                    c.drawLine(
-                            translateX(it.values[i - 1].x),
-                            translateY(it.values[i - 1].y),
-                            translateX(it.values[i].x),
-                            translateY(it.values[i].y),
-                            paints[index]
-                    )
+                inScreenList.forEachIndexed { index, it ->
+                    for (i in 1 until it.size) {
+                        c.drawLine(
+                                translateX(it[i - 1].x),
+                                translateY(it[i - 1].y),
+                                translateX(it[i].x),
+                                translateY(it[i].y),
+                                paints[index]
+                        )
+                    }
                 }
             }
         }
@@ -142,7 +143,10 @@ open class DiagramView @JvmOverloads constructor(
         xMax = data.map { it.values.last().x }.max()!!
         xRange = xMax - xMin
 
-        _data = data
+        inScreenList.clear()
+        data.forEach {
+            inScreenList.add(mutableListOf())
+        }
 
         paints = data.map {
             Paint().apply {
@@ -151,6 +155,8 @@ open class DiagramView @JvmOverloads constructor(
                 this.isAntiAlias = true
             }
         }
+
+        _data = data
 
         invalidate()
     }
@@ -161,32 +167,50 @@ open class DiagramView @JvmOverloads constructor(
     private fun translateY(y: Float) =
             paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
 
-    private fun calcualteOnScreenRangeItems() {
-        inScreenList.clear()
+    private fun calculateOnScreenRangeItems() {
         for (i in 0 until _data.size) {
+            var left: DiagramValue = _data[i].values.first()
+            var right: DiagramValue = _data[i].values.last()
+            inScreenList[i].clear()
             for (j in 0 until _data[i].values.size) {
-                if (translateX(_data[i].values[j].x).let {it > -25 && it < xSize + paddingLeft + paddingRight + 25}) {
-                    inScreenList.add(_data[i].values[j])
+                val translatedValue = translateX(_data[i].values[j].x)
+
+                if (translatedValue <= 0) {
+                    left = _data[i].values[j]
+                }
+
+                if (translatedValue > 0 && translatedValue < xSize + paddingLeft + paddingRight) {
+                    inScreenList[i].add(_data[i].values[j])
+                }
+
+                if (translatedValue > xSize + paddingLeft + paddingRight ) {
+                    right = _data[i].values[j]
+                    break
                 }
             }
+
+            inScreenList[i].add(0, left)
+            inScreenList[i].add(right)
         }
     }
 
     private fun calculateOnScreenMax(): Float {
-        var max = inScreenList.first().y
-        for (i in 1 until inScreenList.size) {
-            if (inScreenList[i].y > max) {
-                max = inScreenList[i].y
+        var max = inScreenList.first().first().y
+        for (line in inScreenList) {
+            val maxInLine = line.maxBy { it.y }!!.y
+            if (maxInLine > max) {
+                max = maxInLine
             }
         }
         return max
     }
 
     private fun calculateOnScreenMin(): Float {
-        var min = inScreenList.first().y
-        for (i in 1 until inScreenList.size) {
-            if (inScreenList[i].y < min) {
-                min = inScreenList[i].y
+        var min = inScreenList.first().first().y
+        for (line in inScreenList) {
+            val minInLine = line.minBy { it.y }!!.y
+            if (minInLine < min) {
+                min = minInLine
             }
         }
         return min
