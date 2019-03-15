@@ -35,6 +35,8 @@ open class DiagramView @JvmOverloads constructor(
     protected var position: Float = 0f
     var dinamicSize = true
 
+    val inScreenList = mutableListOf<DiagramValue>()
+
     //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -92,6 +94,13 @@ open class DiagramView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         canvas?.let {c ->
             _data.forEachIndexed { index, it ->
+                calcualteOnScreenRangeItems()
+                if (dinamicSize) {
+                    yMin = calculateOnScreenMin()
+                    yMax = calculateOnScreenMax()
+                    yRange = yMax - yMin
+                }
+
                 for (i in 1 until it.values.size) {
                     c.drawLine(
                             translateX(it.values[i - 1].x),
@@ -149,18 +158,38 @@ open class DiagramView @JvmOverloads constructor(
     private fun translateX(x: Float) =
             paddingLeft + (((x - xMin)/xRange * xSize) * graphicsScaleX + position)
 
-    private fun translateY(y: Float) = if (dinamicSize) {
-        val onScreen = calcualteOnScreenRangeItems().flatten()
-        val yMin = onScreen.minBy { it.y }!!.y
-        val yMax = onScreen.maxBy { it.y }!!.y
-        val yRange = yMax - yMin
-        paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
-    } else {
-        paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
+    private fun translateY(y: Float) =
+            paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
+
+    private fun calcualteOnScreenRangeItems() {
+        inScreenList.clear()
+        for (i in 0 until _data.size) {
+            for (j in 0 until _data[i].values.size) {
+                if (translateX(_data[i].values[j].x).let {it > -25 && it < xSize + paddingLeft + paddingRight + 25}) {
+                    inScreenList.add(_data[i].values[j])
+                }
+            }
+        }
     }
 
-    private fun calcualteOnScreenRangeItems(): List<List<DiagramValue>> {
-        return _data.map { it.values.filter { translateX(it.x).let {it > -25 && it < xSize + paddingLeft + paddingRight + 25 }  } }
+    private fun calculateOnScreenMax(): Float {
+        var max = inScreenList.first().y
+        for (i in 1 until inScreenList.size) {
+            if (inScreenList[i].y > max) {
+                max = inScreenList[i].y
+            }
+        }
+        return max
+    }
+
+    private fun calculateOnScreenMin(): Float {
+        var min = inScreenList.first().y
+        for (i in 1 until inScreenList.size) {
+            if (inScreenList[i].y < min) {
+                min = inScreenList[i].y
+            }
+        }
+        return min
     }
 
     fun setYScale(scale: Float) {
