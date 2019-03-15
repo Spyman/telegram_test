@@ -2,8 +2,11 @@ package com.spyman.telegramconcurs.diagram
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.os.Handler
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -36,14 +39,15 @@ open class DiagramView @JvmOverloads constructor(
     var dinamicSize = true
 
     val inScreenList = mutableListOf<MutableList<DiagramValue>>()
+    var axisPaint = Paint().apply { color = Color.GRAY; strokeWidth = 1f; isAntiAlias = true }
+
+    var xAxisHeight = 100
+    var xAxisValueFormatter = DefaultValueFormatter()
 
     //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent): Boolean {
-            // Initiates the decay phase of any active edge effects.
-            //releaseEdgeEffects()
-            // Aborts any active scroll animations and invalidates.
             scroller.forceFinished(true)
             postInvalidateOnAnimation()
             return true
@@ -51,28 +55,16 @@ open class DiagramView @JvmOverloads constructor(
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
             scroller.forceFinished(true)
-            // Begins the animation
             scroller.fling(
-                    // Current scroll position
                     Math.round(position),
                     0,
                     Math.round(velocityX),
                     0,
-                    /*
-                     * Minimum and maximum scroll positions. The minimum scroll
-                     * position is generally zero and the maximum scroll position
-                     * is generally the content size less the screen size. So if the
-                     * content width is 1000 pixels and the screen width is 200
-                     * pixels, the maximum scroll offset should be 800 pixels.
-                     */
                     Math.round((-xSize * graphicsScaleX) + xSize), 0,
                     Int.MIN_VALUE, Int.MAX_VALUE,
-                    // The edges of the content. This comes into play when using
-                    // the EdgeEffect class to draw "glow" overlays.
                     Math.round(xSize * 0.4f),
                     ySize
             )
-            // Invalidates to trigger computeScroll()
             postInvalidateOnAnimation()
             return true
         }
@@ -88,10 +80,11 @@ open class DiagramView @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         xSize = measuredWidth - paddingTop - paddingBottom
-        ySize = measuredHeight - paddingLeft - paddingRight
+        ySize = measuredHeight - paddingLeft - paddingRight - xAxisHeight
     }
 
     override fun onDraw(canvas: Canvas?) {
+        canvas?.drawColor(Color.DKGRAY)
         canvas?.let {c ->
             if (_data.isNotEmpty()) {
                 calculateOnScreenRangeItems()
@@ -111,6 +104,8 @@ open class DiagramView @JvmOverloads constructor(
                         )
                     }
                 }
+                drawXAxis(canvas)
+                drawYAxis(canvas)
             }
         }
 
@@ -219,5 +214,29 @@ open class DiagramView @JvmOverloads constructor(
     fun setYScale(scale: Float) {
         graphicsScaleX = scale
         invalidate()
+    }
+
+    fun drawXAxis(canvas: Canvas) {
+        canvas.drawLine(translateX(xMin), translateY(yMin), translateX(xMax), translateY(yMin), axisPaint)
+    }
+
+    fun drawYAxis(canvas: Canvas) {
+
+    }
+
+    override fun onSaveInstanceState(): Parcelable? =
+        DiagramState(position/xSize, graphicsScaleX, _data, dinamicSize, super.onSaveInstanceState())
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state !is DiagramState) {
+            super.onRestoreInstanceState(state)
+            return
+        }
+
+        setData(state.data)
+        dinamicSize = state.dinamicSize
+        //position = state.position*(measuredWidth - paddingTop - paddingBottom)
+        graphicsScaleX = state.graphScaleX
+        super.onRestoreInstanceState(state.superState)
     }
 }
