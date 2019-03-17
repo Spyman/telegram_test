@@ -31,11 +31,16 @@ open class DiagramView @JvmOverloads constructor(
     protected var xMin: Float = 0f
 
     protected var xRange: Float = 0f
-    protected var graphicsScaleX: Float = 10f
+    protected var graphicsScaleX: Float = 1f
 
     protected lateinit var paints: List<Paint>
 
     protected var position: Float = 0f
+    set(value) {
+        field = value
+        onPositionChangeListener?.onChange(value)
+    }
+
     var dinamicMinValue = false
     var dinamicMaxValue = true
 
@@ -46,6 +51,7 @@ open class DiagramView @JvmOverloads constructor(
     var xAxisValueFormatter = DefaultValueFormatter()
 
     var yAxisCount = 5
+    var onPositionChangeListener: OnValueChangeListener<Float>? = null
 
     //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
@@ -235,7 +241,7 @@ open class DiagramView @JvmOverloads constructor(
         return min
     }
 
-    fun setYScale(scale: Float) {
+    fun setXScale(scale: Float) {
         graphicsScaleX = scale
         invalidate()
     }
@@ -279,4 +285,6 @@ open class DiagramView @JvmOverloads constructor(
         graphicsScaleX = state.graphScaleX
         super.onRestoreInstanceState(state.superState)
     }
+
+    fun getData() = _data
 }

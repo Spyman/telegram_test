@@ -12,5 +12,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         diagram.setData(DataReader().readFromAssets(this, "chart_data.json").first().convertToDiagramValues())
+        diagram.setXScale(10f)
+        controlView.attachToGraph(diagram)
     }
 }
