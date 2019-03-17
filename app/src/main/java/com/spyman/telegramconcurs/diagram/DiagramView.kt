@@ -5,9 +5,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Handler
-import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -36,7 +36,8 @@ open class DiagramView @JvmOverloads constructor(
     protected lateinit var paints: List<Paint>
 
     protected var position: Float = 0f
-    var dinamicSize = true
+    var dinamicMinValue = false
+    var dinamicMaxValue = true
 
     val inScreenList = mutableListOf<MutableList<DiagramValue>>()
     var axisPaint = Paint().apply { color = Color.GRAY; strokeWidth = 1f; isAntiAlias = true }
@@ -88,11 +89,13 @@ open class DiagramView @JvmOverloads constructor(
         canvas?.let {c ->
             if (_data.isNotEmpty()) {
                 calculateOnScreenRangeItems()
-                if (dinamicSize) {
+                if (dinamicMinValue) {
                     yMin = calculateOnScreenMin()
-                    yMax = calculateOnScreenMax()
-                    yRange = yMax - yMin
                 }
+                if (dinamicMaxValue) {
+                    yMax = calculateOnScreenMax()
+                }
+                yRange = yMax - yMin
                 inScreenList.forEachIndexed { index, it ->
                     for (i in 1 until it.size) {
                         c.drawLine(
@@ -190,9 +193,25 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     private fun calculateOnScreenMax(): Float {
-        var max = inScreenList.first().first().y
-        for (line in inScreenList) {
-            val maxInLine = line.maxBy { it.y }!!.y
+        var max = _data.first().values.first().y
+        for (line in _data) {
+            var maxInLine = line.values.first().y
+            for (value in line.values) {
+                val y = value.y
+                val multiper = translateX(value.x).let {
+                    if (it > xSize) {
+                        return@let (1 - ((it - xSize)/xSize))
+                    }
+                    if (it < paddingLeft) {
+                        return@let 1 - ((-it)/xSize)
+                    }
+                    1f
+                }
+
+                if (y * multiper > maxInLine) {
+                    maxInLine = y * multiper
+                }
+            }
             if (maxInLine > max) {
                 max = maxInLine
             }
@@ -224,8 +243,12 @@ open class DiagramView @JvmOverloads constructor(
 
     }
 
+    private fun leftSide() = -position
+
+    private fun rightSide() = -position + xSize
+
     override fun onSaveInstanceState(): Parcelable? =
-        DiagramState(position/xSize, graphicsScaleX, _data, dinamicSize, super.onSaveInstanceState())
+        DiagramState(position/xSize, graphicsScaleX, _data, dinamicMinValue, super.onSaveInstanceState())
 
     override fun onRestoreInstanceState(state: Parcelable?) {
         if (state !is DiagramState) {
@@ -234,7 +257,7 @@ open class DiagramView @JvmOverloads constructor(
         }
 
         setData(state.data)
-        dinamicSize = state.dinamicSize
+        dinamicMinValue = state.dinamicSize
         //position = state.position*(measuredWidth - paddingTop - paddingBottom)
         graphicsScaleX = state.graphScaleX
         super.onRestoreInstanceState(state.superState)
