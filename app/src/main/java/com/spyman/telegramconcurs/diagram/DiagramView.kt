@@ -45,6 +45,8 @@ open class DiagramView @JvmOverloads constructor(
     var xAxisHeight = 100
     var xAxisValueFormatter = DefaultValueFormatter()
 
+    var yAxisCount = 5
+
     //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -243,7 +245,12 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     fun drawYAxis(canvas: Canvas) {
-
+        var startValue = yMin
+        val addValue = yRange/yAxisCount
+        for (i in 0..yAxisCount) {
+            canvas.drawLine(translateX(xMin), translateY(startValue), translateX(xMax), translateY(startValue), axisPaint)
+            startValue += addValue
+        }
     }
 
     private fun screenLeftSide() = -position
