@@ -63,7 +63,7 @@ open class DiagramView @JvmOverloads constructor(
                     0,
                     Math.round((-xSize * graphicsScaleX) + xSize), 0,
                     Int.MIN_VALUE, Int.MAX_VALUE,
-                    Math.round(xSize * 0.4f),
+                    0,
                     ySize
             )
             postInvalidateOnAnimation()
@@ -71,7 +71,10 @@ open class DiagramView @JvmOverloads constructor(
         }
 
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            position -= distanceX
+            val nextPosition = position - distanceX
+            if (positionRight(-nextPosition) <= graphRight() && position - distanceX <= graphLeft()) {
+                position -= distanceX
+            }
             postInvalidateOnAnimation()
             return true
         }
@@ -192,7 +195,7 @@ open class DiagramView @JvmOverloads constructor(
         }
     }
 
-    private fun calculateOnScreenMax(): Float {
+    private fun calculateOnScreenMax(): Float { // todo may be faster
         var max = _data.first().values.first().y
         for (line in _data) {
             var maxInLine = line.values.first().y
@@ -243,9 +246,16 @@ open class DiagramView @JvmOverloads constructor(
 
     }
 
-    private fun leftSide() = -position
+    private fun screenLeftSide() = -position
 
-    private fun rightSide() = -position + xSize
+    private fun screenRightSide() = -position - xSize
+
+    private fun graphLeft() = paddingLeft
+
+    private fun graphRight() = paddingLeft + xSize * graphicsScaleX
+
+    private fun positionRight(position: Float) =
+            position + xSize
 
     override fun onSaveInstanceState(): Parcelable? =
         DiagramState(position/xSize, graphicsScaleX, _data, dinamicMinValue, super.onSaveInstanceState())
