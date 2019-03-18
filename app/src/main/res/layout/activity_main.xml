@@ -51,6 +51,6 @@
     <com.spyman.telegramconcurs.diagram.GraphControlView
         android:id="@+id/controlView"
         android:layout_width="match_parent"
-        android:layout_height="100dp"/>
+        android:layout_height="68dp"/>
 
 </LinearLayout>

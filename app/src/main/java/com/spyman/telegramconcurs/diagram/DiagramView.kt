@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.os.Handler
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -20,7 +19,8 @@ open class DiagramView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     private var _data: List<LineDiagramData> = mutableListOf()
-    protected var xSize: Int = 0
+    protected val defaultXAxisSize = 100
+    var xSize: Int = 0 // todo make private
 
     protected var ySize: Int = 0
     protected var yMax: Float = 0f
@@ -31,11 +31,11 @@ open class DiagramView @JvmOverloads constructor(
     protected var xMin: Float = 0f
 
     protected var xRange: Float = 0f
-    protected var graphicsScaleX: Float = 1f
+    var graphicsScaleX: Float = 1f // todo make private
 
     protected lateinit var paints: List<Paint>
 
-    protected var position: Float = 0f
+    var position: Float = 0f // todo make private
     set(value) {
         field = value
         onPositionChangeListener?.onChange(value)
@@ -47,13 +47,18 @@ open class DiagramView @JvmOverloads constructor(
     val inScreenList = mutableListOf<MutableList<DiagramValue>>()
     var axisPaint = Paint().apply { color = Color.GRAY; strokeWidth = 1f; isAntiAlias = true }
 
-    var xAxisHeight = 100
+    var xAxisHeight = defaultXAxisSize
     var xAxisValueFormatter = DefaultValueFormatter()
+    var isXAxisVisible = true
+    set(value) {
+        field = value
+        calculateSizes()
+    }
+    var isYAxisVisible = true
 
     var yAxisCount = 5
     var onPositionChangeListener: OnValueChangeListener<Float>? = null
 
-    //protected val positionController = PositionController()
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent): Boolean {
@@ -91,8 +96,12 @@ open class DiagramView @JvmOverloads constructor(
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
+        calculateSizes()
+    }
+
+    private fun calculateSizes() {
         xSize = measuredWidth - paddingTop - paddingBottom
-        ySize = measuredHeight - paddingLeft - paddingRight - xAxisHeight
+        ySize = measuredHeight - paddingLeft - paddingRight - if (isXAxisVisible) {defaultXAxisSize} else {0}
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -247,10 +256,15 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     fun drawXAxis(canvas: Canvas) {
-        canvas.drawLine(translateX(xMin), translateY(yMin), translateX(xMax), translateY(yMin), axisPaint)
+        if (isXAxisVisible) {
+            canvas.drawLine(translateX(xMin), translateY(yMin), translateX(xMax), translateY(yMin), axisPaint)
+        }
     }
 
     fun drawYAxis(canvas: Canvas) {
+        if (!isYAxisVisible) {
+            return
+        }
         var startValue = yMin
         val addValue = yRange/yAxisCount
         for (i in 0..yAxisCount) {
