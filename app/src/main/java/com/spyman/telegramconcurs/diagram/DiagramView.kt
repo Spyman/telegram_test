@@ -146,6 +146,7 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
+        if (!isEnabled) { return false }
         performClick()
         gestureDetector.onTouchEvent(event)
         return true
@@ -301,4 +302,13 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     fun getData() = _data
+
+    fun updatePosition(x: Float) {
+        position = x
+        postInvalidateOnAnimation()
+    }
+
+    fun abortScroll() {
+        scroller.forceFinished(true)
+    }
 }

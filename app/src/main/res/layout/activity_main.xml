@@ -49,6 +49,8 @@
         android:layout_height="250dp"
         android:layout_margin="16dp" />
     <com.spyman.telegramconcurs.diagram.GraphControlView
+        android:clickable="true"
+        android:focusable="true"
         android:id="@+id/controlView"
         android:layout_width="match_parent"
         android:layout_height="68dp"/>
