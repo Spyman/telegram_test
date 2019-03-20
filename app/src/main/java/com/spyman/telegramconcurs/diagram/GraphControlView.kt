@@ -52,7 +52,10 @@ open class GraphControlView @JvmOverloads constructor(
                         scaleToRight(distanceX)
                         return true
                     }
-
+                    TouchStartPosition.LEFT -> {
+                        scaleToLeft(distanceX)
+                        return true
+                    }
                     else -> return false
                 }
             }?:false
@@ -105,6 +108,20 @@ open class GraphControlView @JvmOverloads constructor(
             graph?.let {
                 val layoutParams = window.layoutParams
                 layoutParams.width -= Math.round(distanceX)
+                it.setXScale(measuredWidth/layoutParams.width.toFloat())
+                window.requestLayout()
+            }
+        }
+    }
+
+    protected fun scaleToLeft(distanceX: Float) {
+        window?.let {window ->
+            graph?.let {
+                val layoutParams = window.layoutParams
+                Math.round(distanceX).let {
+                    layoutParams.width += it
+                    moveWindow(distanceX)
+                }
                 it.setXScale(measuredWidth/layoutParams.width.toFloat())
                 window.requestLayout()
             }

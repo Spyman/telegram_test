@@ -18,7 +18,7 @@ import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
 open class DiagramView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-    private var _data: List<LineDiagramData> = mutableListOf()
+    private var data: List<LineDiagramData> = mutableListOf()
     protected val defaultXAxisSize = 100
     var xSize: Int = 0 // todo make private
     var minScale = 0.2f
@@ -123,7 +123,7 @@ open class DiagramView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         canvas?.drawColor(Color.DKGRAY)
         canvas?.let {c ->
-            if (_data.isNotEmpty()) {
+            if (data.isNotEmpty()) {
                 calculateOnScreenRangeItems()
                 if (dinamicMinValue) {
                     yMin = calculateOnScreenMin()
@@ -191,7 +191,7 @@ open class DiagramView @JvmOverloads constructor(
             }
         }
 
-        _data = data
+        this.data = data
 
         invalidate()
     }
@@ -203,23 +203,23 @@ open class DiagramView @JvmOverloads constructor(
             paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
 
     private fun calculateOnScreenRangeItems() {
-        for (i in 0 until _data.size) {
-            var left: DiagramValue = _data[i].values.first()
-            var right: DiagramValue = _data[i].values.last()
+        for (i in 0 until data.size) {
+            var left: DiagramValue = data[i].values.first()
+            var right: DiagramValue = data[i].values.last()
             inScreenList[i].clear()
-            for (j in 0 until _data[i].values.size) {
-                val translatedValue = translateX(_data[i].values[j].x)
+            for (j in 0 until data[i].values.size) {
+                val translatedValue = translateX(data[i].values[j].x)
 
                 if (translatedValue <= 0) {
-                    left = _data[i].values[j]
+                    left = data[i].values[j]
                 }
 
                 if (translatedValue > 0 && translatedValue < xSize + paddingLeft + paddingRight) {
-                    inScreenList[i].add(_data[i].values[j])
+                    inScreenList[i].add(data[i].values[j])
                 }
 
                 if (translatedValue > xSize + paddingLeft + paddingRight ) {
-                    right = _data[i].values[j]
+                    right = data[i].values[j]
                     break
                 }
             }
@@ -230,8 +230,8 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     private fun calculateOnScreenMax(): Float { // todo may be faster
-        var max = _data.first().values.first().y
-        for (line in _data) {
+        var max = data.first().values.first().y
+        for (line in data) {
             var maxInLine = line.values.first().y
             for (value in line.values) {
                 val y = value.y
@@ -305,7 +305,7 @@ open class DiagramView @JvmOverloads constructor(
             position + xSize
 
     override fun onSaveInstanceState(): Parcelable? =
-        DiagramState(position/xSize, graphicsScaleX, _data, dinamicMinValue, super.onSaveInstanceState())
+        DiagramState(position/xSize, graphicsScaleX, data, dinamicMinValue, super.onSaveInstanceState())
 
     override fun onRestoreInstanceState(state: Parcelable?) {
         if (state !is DiagramState) {
@@ -320,7 +320,7 @@ open class DiagramView @JvmOverloads constructor(
         super.onRestoreInstanceState(state.superState)
     }
 
-    fun getData() = _data
+    fun getData() = data
 
     fun updatePosition(x: Float) {
         position = if (isValueOutsideBoundRight(x)) {
