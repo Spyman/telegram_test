@@ -85,8 +85,8 @@ open class DiagramView @JvmOverloads constructor(
 
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
             val nextPosition = position - distanceX
-            if (positionRight(-nextPosition) <= graphRight() && position - distanceX <= graphLeft()) {
-                position -= distanceX
+            if (isValueInsideBounds(nextPosition)) {
+                position = nextPosition
             }
             postInvalidateOnAnimation()
             return true
@@ -103,6 +103,15 @@ open class DiagramView @JvmOverloads constructor(
         xSize = measuredWidth - paddingTop - paddingBottom
         ySize = measuredHeight - paddingLeft - paddingRight - if (isXAxisVisible) {defaultXAxisSize} else {0}
     }
+
+    protected fun isValueInsideBounds(value: Float) =
+            !isValueOutsideBoundRight(value) && !isValueOutsideBoundLeft(value)
+
+    protected fun isValueOutsideBoundLeft(value: Float) =
+            value > graphLeft()
+
+    protected fun isValueOutsideBoundRight(value: Float) =
+            positionRight(-value) > graphRight()
 
     override fun onDraw(canvas: Canvas?) {
         canvas?.drawColor(Color.DKGRAY)
@@ -304,7 +313,13 @@ open class DiagramView @JvmOverloads constructor(
     fun getData() = _data
 
     fun updatePosition(x: Float) {
-        position = x
+        position = if (isValueOutsideBoundRight(x)) {
+            positionRight(-graphRight())
+        } else if (isValueOutsideBoundLeft(x)) {
+            graphLeft().toFloat()
+        } else {
+            x
+        }
         postInvalidateOnAnimation()
     }
 

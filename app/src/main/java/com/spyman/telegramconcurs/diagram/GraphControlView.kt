@@ -1,12 +1,14 @@
 package com.spyman.telegramconcurs.diagram
 
 import android.content.Context
+import android.graphics.Canvas
 import android.util.AttributeSet
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.OverScroller
 import android.widget.RelativeLayout
 import com.spyman.telegramconcurs.R
 
@@ -87,10 +89,6 @@ open class GraphControlView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         window?.measure(widthMeasureSpec, heightMeasureSpec)
-    }
-
-    protected fun setGuestureDetector() {
-
     }
 
     protected fun moveWindow(distanceX: Float) {
