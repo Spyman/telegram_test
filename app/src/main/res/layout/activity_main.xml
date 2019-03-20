@@ -15,7 +15,7 @@
         <TextView
             android:layout_marginLeft="20dp"
             android:layout_centerVertical="true"
-            android:textSize="16sp"
+            android:textSize="24sp"
             android:textColor="@android:color/white"
             android:text="@string/statistics"
             android:layout_width="wrap_content"
@@ -28,6 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent">
             <ImageView
+                android:src="@drawable/ic_moon_day"
                 android:layout_gravity="center"
                 android:layout_width="16dp"
                 android:layout_height="16dp" />
@@ -35,7 +36,7 @@
     </RelativeLayout>
 
     <TextView
-        android:textColor="#0000ff"
+        android:textColor="@color/colorAccent"
         android:layout_marginTop="20dp"
         android:textSize="16sp"
         android:layout_marginLeft="16dp"
@@ -47,12 +48,17 @@
         android:id="@+id/diagram"
         android:layout_width="match_parent"
         android:layout_height="250dp"
-        android:layout_margin="16dp" />
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"/>
     <com.spyman.telegramconcurs.diagram.GraphControlView
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
         android:clickable="true"
         android:focusable="true"
         android:id="@+id/controlView"
         android:layout_width="match_parent"
-        android:layout_height="68dp"/>
+        android:background="@color/control_view_background"
+        android:layout_height="48dp"/>
 
 </LinearLayout>

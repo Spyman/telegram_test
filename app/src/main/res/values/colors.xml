@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorPrimary">#517da2</color>
+    <color name="colorPrimaryDark">#426382</color>
+    <color name="colorAccent">#5aa8db</color>
+    <color name="gray_background">#f0f0f0</color>
+    <color name="control_view_background">#f5f8f9</color>
+    <color name="graph_text_color">#b2bbc1</color>
+    <color name="graph_divider_color">#f1f1f2</color>
+    <color name="divider_color">#e0e0e0</color>
+    <color name="control_border_color">#dbe7f0</color>
 </resources>

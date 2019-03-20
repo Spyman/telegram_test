@@ -19,7 +19,7 @@ open class DiagramView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     private var data: List<LineDiagramData> = mutableListOf()
-    protected val defaultXAxisSize = 100
+    protected val defaultXAxisSize = 42
     var xSize: Int = 0 // todo make private
     var minScale = 0.2f
 
@@ -121,7 +121,6 @@ open class DiagramView @JvmOverloads constructor(
             positionRight(-value) > graphRight()
 
     override fun onDraw(canvas: Canvas?) {
-        canvas?.drawColor(Color.DKGRAY)
         canvas?.let {c ->
             if (data.isNotEmpty()) {
                 calculateOnScreenRangeItems()
