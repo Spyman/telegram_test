@@ -21,6 +21,7 @@ open class DiagramView @JvmOverloads constructor(
     private var _data: List<LineDiagramData> = mutableListOf()
     protected val defaultXAxisSize = 100
     var xSize: Int = 0 // todo make private
+    var minScale = 0.2f
 
     protected var ySize: Int = 0
     protected var yMax: Float = 0f
@@ -31,7 +32,12 @@ open class DiagramView @JvmOverloads constructor(
     protected var xMin: Float = 0f
 
     protected var xRange: Float = 0f
-    var graphicsScaleX: Float = 1f // todo make private
+    protected var graphicsScaleX: Float = 1f
+    set(value) {
+        field = value
+        onScaleChagneListener?.onChange(value)
+    }
+
 
     protected lateinit var paints: List<Paint>
 
@@ -58,6 +64,7 @@ open class DiagramView @JvmOverloads constructor(
 
     var yAxisCount = 5
     var onPositionChangeListener: OnValueChangeListener<Float>? = null
+    var onScaleChagneListener: OnValueChangeListener<Float>? = null
 
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -261,7 +268,10 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     fun setXScale(scale: Float) {
-        graphicsScaleX = scale
+        val newScale = if (scale < minScale) {minScale} else {scale}
+        val absPos = position / graphicsScaleX
+        graphicsScaleX = newScale
+        position = absPos * newScale
         invalidate()
     }
 
@@ -326,4 +336,6 @@ open class DiagramView @JvmOverloads constructor(
     fun abortScroll() {
         scroller.forceFinished(true)
     }
+
+    fun getXScale() = graphicsScaleX
 }

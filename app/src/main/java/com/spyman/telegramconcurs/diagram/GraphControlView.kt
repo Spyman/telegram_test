@@ -1,14 +1,11 @@
 package com.spyman.telegramconcurs.diagram
 
 import android.content.Context
-import android.graphics.Canvas
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.OverScroller
 import android.widget.RelativeLayout
 import com.spyman.telegramconcurs.R
 
@@ -51,6 +48,10 @@ open class GraphControlView @JvmOverloads constructor(
                         moveWindow(distanceX)
                         return true
                     }
+                    TouchStartPosition.RIGHT -> {
+                        scaleToRight(distanceX)
+                        return true
+                    }
 
                     else -> return false
                 }
@@ -69,7 +70,7 @@ open class GraphControlView @JvmOverloads constructor(
         diagramView.isEnabled = false
         graph.onPositionChangeListener = object:OnValueChangeListener<Float> {
             override fun onChange(newValue: Float) {
-                window?.x = -graph.position/graph.graphicsScaleX*measuredWidth.toFloat()/graph.xSize.toFloat()
+                window?.x = -graph.position/graph.getXScale()*measuredWidth.toFloat()/graph.xSize.toFloat()
             }
         }
 
@@ -77,10 +78,10 @@ open class GraphControlView @JvmOverloads constructor(
         window = ImageView(context)
         window?.post {
             window?.setImageResource(R.drawable.window)
-            val layoutParams = RelativeLayout.LayoutParams(Math.round(measuredWidth.toFloat()/graph.graphicsScaleX*measuredWidth.toFloat()/graph.xSize.toFloat()), ViewGroup.LayoutParams.MATCH_PARENT)
+            val layoutParams = RelativeLayout.LayoutParams(Math.round(measuredWidth.toFloat()/graph.getXScale()*measuredWidth.toFloat()/graph.xSize.toFloat()), ViewGroup.LayoutParams.MATCH_PARENT)
 
             window?.layoutParams = layoutParams
-            window?.x = -graph.position/graph.graphicsScaleX
+            window?.x = -graph.position/graph.getXScale()
             window?.requestLayout()
         }
         addView(window)
@@ -94,7 +95,18 @@ open class GraphControlView @JvmOverloads constructor(
     protected fun moveWindow(distanceX: Float) {
         window?.let {window ->
             graph?.let {
-                it.updatePosition(it.position + distanceX * it.graphicsScaleX * it.xSize.toFloat()/measuredWidth.toFloat())
+                it.updatePosition(it.position + distanceX * it.getXScale() * it.xSize.toFloat()/measuredWidth.toFloat())
+            }
+        }
+    }
+
+    protected fun scaleToRight(distanceX: Float) {
+        window?.let { window ->
+            graph?.let {
+                val layoutParams = window.layoutParams
+                layoutParams.width -= Math.round(distanceX)
+                it.setXScale(measuredWidth/layoutParams.width.toFloat())
+                window.requestLayout()
             }
         }
     }
