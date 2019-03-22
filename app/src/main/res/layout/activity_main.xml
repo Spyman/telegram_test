@@ -60,5 +60,8 @@
         android:layout_width="match_parent"
         android:background="@color/control_view_background"
         android:layout_height="48dp"/>
-
+    <com.spyman.telegramconcurs.diagram.LegendView
+        android:id="@+id/legend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 </LinearLayout>

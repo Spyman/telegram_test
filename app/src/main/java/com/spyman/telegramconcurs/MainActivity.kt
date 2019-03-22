@@ -14,5 +14,6 @@ class MainActivity : AppCompatActivity() {
         diagram.setData(DataReader().readFromAssets(this, "chart_data.json").first().convertToDiagramValues())
         diagram.setXScale(10f)
         controlView.attachToGraph(diagram)
+        legend.attachToGraph(diagram)
     }
 }

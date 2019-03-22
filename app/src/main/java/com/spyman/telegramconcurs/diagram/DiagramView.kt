@@ -19,6 +19,8 @@ open class DiagramView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     private var data: List<LineDiagramData> = mutableListOf()
+
+
     protected val defaultXAxisSize = 42
     var xSize: Int = 0 // todo make private
     var minScale = 0.2f
@@ -65,6 +67,7 @@ open class DiagramView @JvmOverloads constructor(
     var yAxisCount = 5
     var onPositionChangeListener: OnValueChangeListener<Float>? = null
     var onScaleChagneListener: OnValueChangeListener<Float>? = null
+    private var onDataChangedListener: OnValueChangeListener<List<LineDiagramData>>? = null
 
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -180,6 +183,11 @@ open class DiagramView @JvmOverloads constructor(
         inScreenList.clear()
         data.forEach {
             inScreenList.add(mutableListOf())
+            it.addVisibilityChangeListener(object : OnValueChangeListener<Boolean> {
+                override fun onChange(newValue: Boolean) {
+                    onLineVisibilityChanged(it)
+                }
+            })
         }
 
         paints = data.map {
@@ -192,6 +200,7 @@ open class DiagramView @JvmOverloads constructor(
 
         this.data = data
 
+        onDataChangedListener?.onChange(data)
         invalidate()
     }
 
@@ -206,6 +215,9 @@ open class DiagramView @JvmOverloads constructor(
             var left: DiagramValue = data[i].values.first()
             var right: DiagramValue = data[i].values.last()
             inScreenList[i].clear()
+            if (!data[i].visible) {
+                continue
+            }
             for (j in 0 until data[i].values.size) {
                 val translatedValue = translateX(data[i].values[j].x)
 
@@ -231,6 +243,9 @@ open class DiagramView @JvmOverloads constructor(
     private fun calculateOnScreenMax(): Float { // todo may be faster
         var max = data.first().values.first().y
         for (line in data) {
+            if (!line.visible) {
+                continue
+            }
             var maxInLine = line.values.first().y
             for (value in line.values) {
                 val y = value.y
@@ -337,4 +352,13 @@ open class DiagramView @JvmOverloads constructor(
     }
 
     fun getXScale() = graphicsScaleX
+
+    fun setOnDataChangeListener(onDataChangedListener: OnValueChangeListener<List<LineDiagramData>>) {
+        onDataChangedListener.onChange(data)
+        this.onDataChangedListener = onDataChangedListener
+    }
+
+    fun onLineVisibilityChanged(item: LineDiagramData) {
+        invalidate()
+    }
 }

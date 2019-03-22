@@ -2,8 +2,25 @@ package com.spyman.telegramconcurs.diagram.diagram_data
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.spyman.telegramconcurs.diagram.OnValueChangeListener
 
 data class LineDiagramData(val values: MutableList<DiagramValue>, val name: String, val color: Int): Parcelable {
+    var visible = true
+    set(visible) {
+        onVisibleChangeListeners.forEach { it.onChange(visible) }
+        field = visible
+    }
+
+    private val onVisibleChangeListeners: MutableList<OnValueChangeListener<Boolean>> = mutableListOf()
+
+    fun addVisibilityChangeListener(listener: OnValueChangeListener<Boolean>) {
+        onVisibleChangeListeners.add(listener)
+    }
+
+    fun removeVisibilityChangeListener(listener: OnValueChangeListener<Boolean>) {
+        onVisibleChangeListeners.remove(listener)
+    }
+
     private var _minimumValue: Float? = null
     var minimumValue: Float
         get() = _minimumValue.let {
