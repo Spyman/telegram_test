@@ -3,7 +3,6 @@ package com.spyman.telegramconcurs.diagram
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.FrameLayout
 import com.spyman.telegramconcurs.R
 import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
@@ -16,8 +15,8 @@ class LegendView @JvmOverloads constructor(
         addView(LayoutInflater.from(context).inflate(R.layout.legend_view, this, false))
     }
 
-    fun attachToGraph(diagramView: DiagramView) {
-        diagramView.setOnDataChangeListener(this)
+    fun attachToGraph(graphView: GraphView) {
+        graphView.setOnDataChangeListener(this)
     }
 
     override fun onChange(newValue: List<LineDiagramData>) {

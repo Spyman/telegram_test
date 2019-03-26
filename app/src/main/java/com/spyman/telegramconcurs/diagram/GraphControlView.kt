@@ -12,12 +12,12 @@ import com.spyman.telegramconcurs.R
 open class GraphControlView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
-    lateinit var diagramView: DiagramView
+    lateinit var graphView: GraphView
     var window: ImageView? = null
-    var graph: DiagramView? = null
+    var graph: GraphView? = null
     var gestureType: TouchStartPosition? = null
 
-    val touchZoneSize = 25 // todo change to dimention
+    val touchZoneSize = 40 // todo change to dimention
 
     protected var gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent?): Boolean {
@@ -62,22 +62,22 @@ open class GraphControlView @JvmOverloads constructor(
         }
     })
 
-    fun attachToGraph(graph: DiagramView) {
+    fun attachToGraph(graph: GraphView) {
         removeAllViews()
         this.graph = graph
 
-        diagramView = DiagramView(context)
-        diagramView.setData(graph.getData())
-        diagramView.isXAxisVisible = false
-        diagramView.isYAxisVisible = false
-        diagramView.isEnabled = false
+        graphView = GraphView(context)
+        graphView.setData(graph.getData())
+        graphView.isXAxisVisible = false
+        graphView.isYAxisVisible = false
+        graphView.isEnabled = false
         graph.onPositionChangeListener = object:OnValueChangeListener<Float> {
             override fun onChange(newValue: Float) {
                 window?.x = -graph.position/graph.getXScale()*measuredWidth.toFloat()/graph.xSize.toFloat()
             }
         }
 
-        addView(diagramView)
+        addView(graphView)
         window = ImageView(context)
         window?.post {
             window?.setImageResource(R.drawable.window)

@@ -1,27 +1,30 @@
 package com.spyman.telegramconcurs.diagram
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Handler
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.View
+import android.view.*
+import android.widget.LinearLayout
 import android.widget.OverScroller
+import android.widget.TextView
+import com.spyman.telegramconcurs.R
 import com.spyman.telegramconcurs.diagram.diagram_data.DiagramValue
 import com.spyman.telegramconcurs.diagram.diagram_data.LineDiagramData
+import com.spyman.telegramconcurs.extentions.getColorFromAttr
 
 
-open class DiagramView @JvmOverloads constructor(
+open class GraphView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
     private var data: List<LineDiagramData> = mutableListOf()
 
 
-    protected val defaultXAxisSize = 42
+    protected val defaultXAxisSize = 84 // todo change to dimen
     var xSize: Int = 0 // todo make private
     var minScale = 0.2f
 
@@ -53,7 +56,8 @@ open class DiagramView @JvmOverloads constructor(
     var dinamicMaxValue = true
 
     val inScreenList = mutableListOf<MutableList<DiagramValue>>()
-    var axisPaint = Paint().apply { color = Color.GRAY; strokeWidth = 1f; isAntiAlias = true }
+    var axisPaint = Paint().apply { color = Color.GRAY; strokeWidth = 1f; isAntiAlias = true } // todo width to dimen
+    val backgroundPaint = Paint().apply { color = context.getColorFromAttr(android.R.attr.windowBackground); strokeWidth = 1f; isAntiAlias = true }
 
     var xAxisHeight = defaultXAxisSize
     var xAxisValueFormatter = DefaultValueFormatter()
@@ -68,6 +72,10 @@ open class DiagramView @JvmOverloads constructor(
     var onPositionChangeListener: OnValueChangeListener<Float>? = null
     var onScaleChagneListener: OnValueChangeListener<Float>? = null
     private var onDataChangedListener: OnValueChangeListener<List<LineDiagramData>>? = null
+    private var selectedValues:List<DiagramValue>? = null
+    var bubbleBitmap: Bitmap? = null
+    var bubblePositionX = 0f
+    var bubblePositionY = 0f
 
     protected val scroller = OverScroller(context)
     protected val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -100,6 +108,21 @@ open class DiagramView @JvmOverloads constructor(
             }
             postInvalidateOnAnimation()
             return true
+        }
+
+        override fun onSingleTapUp(e: MotionEvent?): Boolean {
+            e?.let {
+                val newSelectedValues = findNested(it.x)
+                if (newSelectedValues.equals(selectedValues)) {
+                    selectedValues = null
+                    hideBubble()
+                } else {
+                    selectedValues = newSelectedValues
+                    showBubble()
+                }
+                invalidate()
+            }
+            return super.onSingleTapUp(e)
         }
 
     }, Handler())
@@ -145,8 +168,28 @@ open class DiagramView @JvmOverloads constructor(
                         )
                     }
                 }
-                drawXAxis(canvas)
-                drawYAxis(canvas)
+                drawXAxis(c)
+                drawYAxis(c)
+            }
+
+            selectedValues?.let {
+                for (i in 0 until it.size) {
+                    if (!data[i].visible) {
+                        continue
+                    }
+                    val radius = 12f // todo change to dimention
+                    val centerX = translateX(it[i].x)
+                    val centerY = translateY(it[i].y)
+                    c.drawCircle(centerX, centerY, radius, paints[i])
+                    c.drawCircle(centerX, centerY, radius/2, backgroundPaint)
+                }
+            }
+
+            bubbleBitmap?.let {
+                val lineX = translateX(bubblePositionX)
+                canvas.drawLine(lineX, translateY(yMin), lineX, translateY(yMax), axisPaint)
+                val bubbleMovedPosition = lineX - (bubbleBitmap!!.width * 1/3)
+                canvas.drawBitmap(it, bubbleMovedPosition, bubblePositionY, null)
             }
         }
 
@@ -208,7 +251,7 @@ open class DiagramView @JvmOverloads constructor(
             paddingLeft + (((x - xMin)/xRange * xSize) * graphicsScaleX + position)
 
     private fun translateY(y: Float) =
-            paddingTop + (ySize - ((y - yMin)/yRange) * ySize)
+            paddingTop + (ySize - ((y - yMin)/yRange) * ySize) + if (isXAxisVisible) { defaultXAxisSize/2 } else { 0 }
 
     private fun calculateOnScreenRangeItems() {
         for (i in 0 until data.size) {
@@ -358,7 +401,65 @@ open class DiagramView @JvmOverloads constructor(
         this.onDataChangedListener = onDataChangedListener
     }
 
+    fun findNested(windowX: Float) =
+        data.map {
+            var minimal = Float.POSITIVE_INFINITY
+            var minimalPos = 0
+            it.let {
+                it.values.forEachIndexed { i, value ->
+                    Math.abs(translateX(value.x) - windowX).let {
+                        if (it < minimal) {
+                            minimal = it
+                            minimalPos = i
+                        }
+                    }
+                }
+
+                return@map it.values[minimalPos]
+            }
+        }
+
+    fun showBubble() {
+        val bubbleView = LayoutInflater.from(context).inflate(R.layout.bubble_view, rootView as ViewGroup, false)
+        bubbleView.findViewById<TextView>(R.id.data_text).setText("Text from xaxis\nformatter")
+        val contentView = bubbleView.findViewById<LinearLayout>(R.id.values)
+        selectedValues?.forEachIndexed { i, it ->
+            val view = LayoutInflater.from(context).inflate(R.layout.bubble_item, contentView, false)
+            view.findViewById<TextView>(R.id.value).apply {
+                text = Math.round(it.y).toString()
+                setTextColor(data[i].color) // todo change to strong logic
+            }
+            view.findViewById<TextView>(R.id.name).apply {
+                text = data[i].name
+                setTextColor(data[i].color)
+            }
+            contentView.addView(view)
+        }
+        bubbleView.measure(0, 0)
+        val bitmap = Bitmap.createBitmap(bubbleView.measuredWidth, bubbleView.measuredHeight, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bitmap)
+        bubbleView.layout(0, 0, bubbleView.measuredWidth, bubbleView.measuredHeight)
+        bubbleView.draw(c)
+        bubbleBitmap = bitmap
+        bubblePositionX = calculateBubblePositionX()
+    }
+
+    fun calculateBubblePositionX(): Float {
+        var sum = 0f
+        selectedValues?.filterIndexed {i, it -> data[i].visible }?.forEach {
+            sum += it.x
+        }
+        return sum / (selectedValues?.size?: 1)
+    }
+
+    fun hideBubble() {
+        bubbleBitmap = null
+    }
+
     fun onLineVisibilityChanged(item: LineDiagramData) {
+        bubbleBitmap?.let {
+            showBubble()
+        }
         invalidate()
     }
 }

@@ -21,6 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <FrameLayout
+            android:id="@+id/change_theme"
             android:foreground="?attr/selectableItemBackground"
             android:layout_alignParentRight="true"
             android:paddingRight="20dp"
@@ -44,7 +45,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <com.spyman.telegramconcurs.diagram.DiagramView
+    <com.spyman.telegramconcurs.diagram.GraphView
         android:id="@+id/diagram"
         android:layout_width="match_parent"
         android:layout_height="250dp"
@@ -61,6 +62,8 @@
         android:background="@color/control_view_background"
         android:layout_height="48dp"/>
     <com.spyman.telegramconcurs.diagram.LegendView
+        android:layout_marginLeft="14dp"
+        android:layout_marginRight="14dp"
         android:id="@+id/legend"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

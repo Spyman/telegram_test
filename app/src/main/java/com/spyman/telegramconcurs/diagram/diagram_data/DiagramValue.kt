@@ -6,8 +6,7 @@ import android.os.Parcelable
 data class DiagramValue(val x: Float, val y: Float): Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readFloat(),
-            parcel.readFloat()) {
-    }
+            parcel.readFloat())
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeFloat(x)
